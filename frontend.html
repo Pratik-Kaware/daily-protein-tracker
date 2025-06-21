@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indian Nutrition Chat</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 2rem;
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+    }
+    .chat-box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    .input-section {
+      display: flex;
+      gap: 0.5rem;
+    }
+    textarea {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .response {
+      white-space: pre-wrap;
+      margin-top: 1rem;
+      background: #e6f7ff;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🥗 Indian Nutrition Assistant</h2>
+
+  <div class="chat-box">
+    <div class="input-section">
+      <textarea id="userInput" rows="3" placeholder="e.g. I ate 2 rotis and 1 cup dal"></textarea>
+      <button onclick="sendQuery()">Submit</button>
+    </div>
+    <div id="responseBox" class="response"></div>
+  </div>
+
+  <script>
+    async function sendQuery() {
+      const input = document.getElementById("userInput").value;
+      const responseBox = document.getElementById("responseBox");
+      responseBox.innerHTML = "⏳ Thinking...";
+
+      const res = await fetch("http://127.0.0.1:8000/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ txt: input })
+      });
+
+      const data = await res.json();
+      responseBox.innerHTML =
+        `📝 <strong>Your input:</strong> ${data.food}
+
+💬 <strong>AI Response:</strong>
+${data.ollama_response}
+
+📊 <strong>Parsed Nutrition:</strong>
+Protein: ${data.parse_nutrition["Protein (g)"]}g
+Carbs: ${data.parse_nutrition["Carbs (g)"]}g
+Fat: ${data.parse_nutrition["Fat (g)"]}g
+Calories: ${data.parse_nutrition["Calories (kcal)"]} kcal`;
+    }
+  </script>
+</body>
+</html>

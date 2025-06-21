@@ -31,4 +31,9 @@ def parse_nutrition(response: str) -> dict:
         elif "calories" in line:
             nutrients["Calories (kcal)"] = average_range(line)
 
+    for key in nutrients:
+        if nutrients[key] is None:
+            nutrients[key] = 0.0  # or use "Unknown" if you want string
+
+
     return nutrients

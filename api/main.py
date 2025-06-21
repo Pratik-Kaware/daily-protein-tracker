@@ -2,10 +2,20 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from src.log_nutrition import query_ollama
 from utils.parse_nutrition import parse_nutrition
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # FastAPI application setup
 app = FastAPI()
+
+# CORS policy 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can restrict to your frontend later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Request Model for User Input 
 
