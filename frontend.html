@@ -4,90 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Indian Nutrition Chat</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f2f2f2;
-      padding: 2rem;
-      max-width: 700px;
-      margin: auto;
-    }
-    h2 {
-      text-align: center;
-    }
-    .chat-box {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 1rem;
-    }
-    .input-section {
-      display: flex;
-      gap: 0.5rem;
-    }
-    textarea {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 0.5rem 1rem;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .response {
-      white-space: pre-wrap;
-      margin-top: 1rem;
-      background: #e6f7ff;
-      padding: 1rem;
-      border-radius: 6px;
-    }
-  </style>
-</head>
-<body>
-  <h2>🥗 Indian Nutrition Assistant</h2>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+  <div class="max-w-xl w-full p-6 bg-white rounded-xl shadow-md space-y-6">
+    <h1 class="text-2xl font-bold text-center text-green-700 flex items-center justify-center gap-2">
+      🥗 Indian Nutrition Assistant
+    </h1>
 
-  <div class="chat-box">
-    <div class="input-section">
-      <textarea id="userInput" rows="3" placeholder="e.g. I ate 2 rotis and 1 cup dal"></textarea>
-      <button onclick="sendQuery()">Submit</button>
+    <form id="nutrition-form" class="space-y-4">
+      <textarea
+        id="food-input"
+        rows="3"
+        placeholder="Type what you ate..."
+        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+      ></textarea>
+
+      <button
+        type="submit"
+        class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+      >
+        Analyze Nutrition
+      </button>
+    </form>
+
+    <div id="response" class="text-gray-700 bg-blue-50 p-4 rounded-lg hidden">
+      <div id="loading" class="flex items-center gap-2"><span>⏳</span> <span>Thinking...</span></div>
+      <pre id="output" class="whitespace-pre-wrap hidden"></pre>
     </div>
-    <div id="responseBox" class="response"></div>
   </div>
 
   <script>
-    async function sendQuery() {
-      const input = document.getElementById("userInput").value;
-      const responseBox = document.getElementById("responseBox");
-      responseBox.innerHTML = "⏳ Thinking...";
+    const form = document.getElementById("nutrition-form");
+    const input = document.getElementById("food-input");
+    const output = document.getElementById("output");
+    const responseDiv = document.getElementById("response");
+    const loading = document.getElementById("loading");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value;
+      responseDiv.classList.remove("hidden");
+      loading.classList.remove("hidden");
+      output.classList.add("hidden");
 
       const res = await fetch("http://127.0.0.1:8000/analyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ txt: input })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txt: text }),
       });
 
       const data = await res.json();
-      responseBox.innerHTML =
-        `📝 <strong>Your input:</strong> ${data.food}
+      loading.classList.add("hidden");
+      output.classList.remove("hidden");
 
-💬 <strong>AI Response:</strong>
+      output.textContent = `
+🍽️ You said: ${data.food}
+
+🧠 LLM Response:
 ${data.ollama_response}
 
-📊 <strong>Parsed Nutrition:</strong>
-Protein: ${data.parse_nutrition["Protein (g)"]}g
-Carbs: ${data.parse_nutrition["Carbs (g)"]}g
-Fat: ${data.parse_nutrition["Fat (g)"]}g
-Calories: ${data.parse_nutrition["Calories (kcal)"]} kcal`;
-    }
+📊 Parsed Nutrition:
+• Protein: ${data.parse_nutrition["Protein (g)"]}g
+• Carbs: ${data.parse_nutrition["Carbs (g)"]}g
+• Fat: ${data.parse_nutrition["Fat (g)"]}g
+• Calories: ${data.parse_nutrition["Calories (kcal)"]} kcal
+    `;
+    });
   </script>
 </body>
+
 </html>
