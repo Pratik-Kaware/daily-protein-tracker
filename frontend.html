@@ -3,33 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indian Nutrition Chat</title>
+  <title>Indian Nutrition AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
-  <div class="max-w-xl w-full p-6 bg-white rounded-xl shadow-md space-y-6">
-    <h1 class="text-2xl font-bold text-center text-green-700 flex items-center justify-center gap-2">
-      🥗 Indian Nutrition Assistant
-    </h1>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    };
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4 py-10 transition-colors duration-300">
+  <div class="max-w-xl w-full p-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl space-y-6 border border-green-100">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-extrabold text-center text-green-700 dark:text-green-300 flex items-center gap-2">
+        🥗 Indian Nutrition AI 
+      </h1>
+      <button id="theme-toggle" class="text-sm text-blue-500 dark:text-yellow-400">🌓 Toggle Theme</button>
+    </div>
 
     <form id="nutrition-form" class="space-y-4">
       <textarea
         id="food-input"
         rows="3"
         placeholder="Type what you ate..."
-        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+        class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
       ></textarea>
 
       <button
         type="submit"
         class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
       >
-        Analyze Nutrition
+        🍽️ Analyze Nutrition
       </button>
     </form>
 
-    <div id="response" class="text-gray-700 bg-blue-50 p-4 rounded-lg hidden">
-      <div id="loading" class="flex items-center gap-2"><span>⏳</span> <span>Thinking...</span></div>
-      <pre id="output" class="whitespace-pre-wrap hidden"></pre>
+    <div id="response" class="text-gray-700 dark:text-gray-100 bg-blue-50 dark:bg-gray-700 p-4 rounded-lg hidden space-y-2 max-h-64 overflow-y-auto">
+      <div id="loading" class="flex items-center gap-2 text-blue-600 dark:text-blue-300 font-medium">
+        ⏳ Thinking...
+      </div>
+      <pre id="output" class="whitespace-pre-wrap hidden font-mono text-sm"></pre>
+      <button
+        id="save-csv"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium mt-2 hidden"
+      >
+        💾 Save to CSV
+      </button>
     </div>
   </div>
 
@@ -39,6 +56,8 @@
     const output = document.getElementById("output");
     const responseDiv = document.getElementById("response");
     const loading = document.getElementById("loading");
+    const saveButton = document.getElementById("save-csv");
+    const themeToggle = document.getElementById("theme-toggle");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -46,31 +65,53 @@
       responseDiv.classList.remove("hidden");
       loading.classList.remove("hidden");
       output.classList.add("hidden");
+      saveButton.classList.add("hidden");
 
-      const res = await fetch("http://127.0.0.1:8000/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txt: text }),
-      });
+      try {
+        const res = await fetch("http://127.0.0.1:8000/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txt: text }),
+        });
 
-      const data = await res.json();
-      loading.classList.add("hidden");
-      output.classList.remove("hidden");
+        const data = await res.json();
+        loading.classList.add("hidden");
+        output.classList.remove("hidden");
+        saveButton.classList.remove("hidden");
 
-      output.textContent = `
+        output.textContent = `
 🍽️ You said: ${data.food}
 
 🧠 LLM Response:
 ${data.ollama_response}
 
 📊 Parsed Nutrition:
-• Protein: ${data.parse_nutrition["Protein (g)"]}g
-• Carbs: ${data.parse_nutrition["Carbs (g)"]}g
-• Fat: ${data.parse_nutrition["Fat (g)"]}g
-• Calories: ${data.parse_nutrition["Calories (kcal)"]} kcal
-    `;
+🟩 Protein: ${data.parse_nutrition["Protein (g)"]}g
+🟨 Carbs: ${data.parse_nutrition["Carbs (g)"]}g
+🟥 Fat: ${data.parse_nutrition["Fat (g)"]}g
+🔵 Calories: ${data.parse_nutrition["Calories (kcal)"]} kcal
+        `;
+
+        saveButton.onclick = () => {
+          const csvData = `Food,Protein (g),Carbs (g),Fat (g),Calories (kcal)\n"${data.food}",${data.parse_nutrition["Protein (g)"]},${data.parse_nutrition["Carbs (g)"]},${data.parse_nutrition["Fat (g)"]},${data.parse_nutrition["Calories (kcal)"]}`;
+          const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', 'nutrition_log.csv');
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+      } catch (error) {
+        loading.textContent = "⚠️ Error connecting to API.";
+      }
+    });
+
+    themeToggle.addEventListener("click", () => {
+    document.documentElement.classList.toggle("dark");
     });
   </script>
 </body>
-
 </html>
